@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_vocabulary"
+        android:icon="@drawable/ic_book_24"
+        android:title="@string/title_vocabulary" />
+
+    <item
+        android:id="@+id/navigation_grammar"
+        android:icon="@drawable/ic_grammar_24"
+        android:title="@string/title_grammar" />
+
+    <item
+        android:id="@+id/navigation_practice"
+        android:icon="@android:drawable/ic_menu_edit"
+    android:title="@string/title_practice" />
+
+</menu>

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".fragment.ToeicPart5Fragment">
+
+    <ProgressBar
+        android:id="@+id/progress_bar_exercise"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible"/>
+
+    <TextView
+        android:id="@+id/text_exercise_error"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/holo_red_dark"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Lỗi tải câu hỏi"
+        tools:visibility="visible"/>
+
+    <ScrollView
+        android:id="@+id/scroll_view_quiz"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/navigation_layout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:id="@+id/layout_quiz_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="invisible"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/text_question_progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="16sp"
+                android:layout_marginBottom="16dp"
+                tools:text="Câu 1/5" />
+
+            <TextView
+                android:id="@+id/text_question"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:textSize="18sp"
+                android:lineSpacingMultiplier="1.2"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textIsSelectable="true" tools:text="This is a sample question text. It might be quite long sometimes." />
+
+            <LinearLayout
+                android:id="@+id/options_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textview_option_a" style="@style/QuizOptionTextViewStyle" tools:text="A. Option A" />
+
+                <TextView
+                    android:id="@+id/textview_option_b" style="@style/QuizOptionTextViewStyle"
+                    tools:text="B. Option B" />
+
+                <TextView
+                    android:id="@+id/textview_option_c" style="@style/QuizOptionTextViewStyle"
+                    tools:text="C. Option C" />
+
+                <TextView
+                    android:id="@+id/textview_option_d" style="@style/QuizOptionTextViewStyle"
+                    tools:text="D. Option D" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/text_explanation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:padding="12dp"
+                android:background="@drawable/background_example_block"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="15sp"
+                android:lineSpacingMultiplier="1.2"
+                android:visibility="gone"
+                android:scrollbars="vertical"
+                android:maxLines="8"
+                android:textIsSelectable="true" tools:text="Đây là phần giải thích chi tiết cho đáp án đúng. Nó có thể khá dài và cần cuộn."
+                tools:visibility="visible"/>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/navigation_layout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="8dp"
+        android:gravity="center_vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Button
+            android:id="@+id/button_previous"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="88dp"
+            app:icon="@drawable/ic_previous"
+            app:iconPadding="8dp"
+            app:iconGravity="start" android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:text="@string/previous_card"
+            android:textAllCaps="false"
+            android:contentDescription="Câu trước"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+        <Button
+            android:id="@+id/button_submit"
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/submit"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+        <Button
+            android:id="@+id/button_next"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="88dp"
+            app:icon="@drawable/ic_next"
+            app:iconPadding="8dp"
+            app:iconGravity="end"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:text="@string/next_card"
+            android:textAllCaps="false"
+            android:contentDescription="Câu tiếp theo"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+    

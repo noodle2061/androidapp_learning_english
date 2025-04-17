@@ -1,0 +1,98 @@
+plugins {
+    alias(libs.plugins.android.application)
+    // id 'com.android.application' // Hoặc dạng cũ nếu bạn không dùng version catalog
+}
+
+// ===========================================================
+// Đọc tệp local.properties để lấy API key (Phần này bạn đã có)
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+    println("Loaded local.properties file.")
+} else {
+    println("Warning: local.properties file not found. API keys might be missing.")
+}
+// ===========================================================
+
+
+android {
+    namespace 'com.example.learning_english'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.example.learning_english"
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // ===========================================================
+        // *** BỔ SUNG PHẦN NÀY VÀO defaultConfig ***
+        // Lấy giá trị API key từ đối tượng localProperties đã đọc ở trên
+        def apiKey = localProperties.getProperty('gemini.apiKey', '') // Mặc định là chuỗi rỗng
+
+        // Log để kiểm tra (tùy chọn)
+        if (apiKey.isEmpty()) {
+            println("Warning: 'gemini.apiKey' not found in local.properties. BuildConfig field will be empty.")
+        } else {
+            println("Found 'gemini.apiKey' in local.properties.")
+        }
+
+        // *** DÒNG QUAN TRỌNG BỊ THIẾU ***
+        // Thêm trường GEMINI_API_KEY vào lớp BuildConfig
+        buildConfigField "String", "GEMINI_API_KEY", "\"${apiKey}\""
+        // ===========================================================
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        // Không cần khai báo debug nếu không có cấu hình đặc biệt
+        // debug {}
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    // *** SỬA LẠI buildFeatures ***
+    buildFeatures {
+        viewBinding true
+        // Đảm bảo buildConfig được bật để tạo lớp BuildConfig
+        buildConfig true
+    }
+    // ==========================
+
+}
+
+dependencies {
+    // Các dependencies của bạn giữ nguyên
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.android.volley:volley:1.2.1'
+    def nav_version = "2.7.7"
+    implementation "androidx.navigation:navigation-fragment:$nav_version"
+    implementation "androidx.navigation:navigation-ui:$nav_version"
+    def room_version = "2.6.1" // Nên dùng phiên bản ổn định mới nhất
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+    def lifecycle_version = "2.7.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-livedata:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
+    implementation 'com.google.android.material:material:1.12.0' // Nên dùng phiên bản ổn định mới nhất
+
+    implementation libs.appcompat
+    // implementation libs.material // Đã khai báo ở trên
+    implementation libs.activity
+    implementation libs.constraintlayout
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}

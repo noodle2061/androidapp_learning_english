@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Learning English</string>
+    <string name="title_vocabulary">Từ vựng</string>
+    <string name="title_grammar">Ngữ pháp</string>
+    <string name="title_practice">Luyện tập</string>
+    <string name="title_settings">Cài đặt</string>
+
+    <string name="add_new_word">Thêm từ mới</string>
+    <string name="view_word_list">Xem danh sách</string>
+    <string name="create_bilingual_story">Tạo truyện song ngữ</string>
+    <string name="flashcards">Flashcards / Ôn tập</string>
+    <string name="toggle_theme">Đổi Giao diện</string>
+    <string name="add_new_vocabulary_title">Thêm Từ vựng Mới</string>
+    <string name="add_new_vocabulary_message">Nhập các từ tiếng Anh, mỗi từ trên một dòng:</string>
+    <string name="add_word_dialog_hint">Mẹo: Có thể thêm nhiều từ cùng lúc, mỗi từ một dòng.</string>
+    <string name="save">Lưu</string>
+    <string name="cancel">Hủy</string>
+    <string name="processing_and_translating">Đang xử lý và dịch...</string>
+    <string name="please_enter_words">Vui lòng nhập từ.</string>
+    <string name="api_error_no_new_words">Không có từ mới hoặc từ cần dịch lại.</string>
+    <string name="api_error_create_request">Lỗi khi tạo yêu cầu API dịch.</string>
+    <string name="api_error_timeout">Lỗi: Yêu cầu API dịch quá thời gian chờ.</string>
+    <string name="api_error_parsing">Lỗi xử lý phản hồi API dịch.</string>
+    <string name="api_error_generic">Đã xảy ra lỗi không xác định khi dịch.</string>
+    <string name="api_error_translation_mismatch">Lỗi: Số lượng bản dịch trả về không khớp.</string>
+    <string name="api_error_no_txt_block">Lỗi: Không tìm thấy khối ```txt trong phản hồi API dịch.</string>
+    <string name="api_error_no_content">Lỗi: Phản hồi API dịch không chứa nội dung.</string>
+    <string name="words_saved">Đã lưu từ và bản dịch.</string>
+    <string name="words_to_review_zero">Không có từ nào cần ôn tập hôm nay!</string>
+    <plurals name="words_to_review_count">
+        <item quantity="one">Có %1$d từ cần ôn tập</item>
+        <item quantity="other">Có %1$d từ cần ôn tập</item>
+    </plurals>
+    <string name="start_review_session">Bắt đầu ôn tập</string>
+    <string name="vocabulary_list_title">Danh sách Từ vựng</string>
+    <string name="update_review_list">Cập nhật DS Ôn tập</string>
+    <string name="back">Quay lại</string>
+    <string name="translation_result_title">Nghĩa của \'%1$s\'</string>
+    <string name="no_translation_placeholder">Chưa có bản dịch hoặc dịch lỗi</string>
+    <string name="close">Đóng</string>
+    <string name="confirm_delete_title">Xác nhận Xóa</string>
+    <string name="delete">Xóa</string>
+
+    <string name="create_story_from_review_list">Tạo truyện từ DS ôn tập</string>
+    <string name="create_story_random">Tạo truyện ngẫu nhiên</string>
+    <string name="story_activity_title">Tạo truyện song ngữ</string>
+    <string name="quiz_section_title">Câu hỏi trắc nghiệm</string>
+    <string name="translate_hint">Giữ và kéo để chọn từ cần dịch</string>
+    <string name="translating_word">Đang dịch \'%1$s\'...</string>
+    <string name="translation_error_encoding">Lỗi mã hóa từ</string>
+    <string name="translation_error_parsing">Lỗi xử lý kết quả dịch</string>
+    <string name="translation_error_api">Lỗi dịch từ.</string>
+    <string name="translation_error_timeout">Lỗi: Hết thời gian chờ dịch từ.</string>
+    <string name="learn_selected_words">Học từ đã chọn</string>
+    <string name="learn_random_words">Học từ ngẫu nhiên</string>
+    <string name="story_placeholder">Đang tạo truyện...</string>
+    <string name="story_options_hint">Có thể bạn đã biết:\n1. "Học từ đã chọn": Tạo truyện chứa các từ bạn đã đánh dấu ôn tập.\n2. "Học từ ngẫu nhiên": Tạo truyện với chủ đề và từ vựng ngẫu nhiên.\n3. Trong lúc đọc truyện và gặp từ mới, hãy bôi đen từ đó, sau đó ấn giữ 1s để dịch từ đó sang tiếng Việt.</string>
+
+    <string name="flashcard_activity_title">Ôn tập Flashcard</string>
+    <string name="flip_card">Lật thẻ</string>
+    <string name="previous_card">Trước</string>
+    <string name="next_card">Sau</string>
+    <string name="no_words_for_flashcards">Không có từ nào trong danh sách.</string>
+    <string name="no_words_to_review">Tuyệt vời! Không có từ nào cần ôn tập hôm nay.</string>
+    <string name="tap_to_flip">(Nhấn để lật)</string>
+    <string name="srs_rating_again">Quên</string>
+    <string name="srs_rating_hard">Khó</string>
+    <string name="srs_rating_good">Nhớ</string>
+    <string name="srs_rating_easy">Dễ</string>
+    <string name="review_complete">Hoàn thành phiên ôn tập!</string>
+
+    <string name="menu_toggle_theme">Đổi Giao diện</string>
+
+    <string name="practice_fragment_label">Luyện tập Reading TOEIC</string>
+
+    <string name="grammar_theory_button">Lý thuyết Ngữ pháp</string>
+    <string name="grammar_practice_button">Luyện tập Ngữ pháp</string>
+    <string name="grammar_theory_list_title">Danh sách Chủ đề Lý thuyết</string>
+    <string name="grammar_practice_list_title">Danh sách Chủ đề Luyện tập</string>
+    <string name="grammar_theory_list_placeholder">Danh sách các chủ đề lý thuyết sẽ hiển thị ở đây.</string>
+    <string name="grammar_practice_list_placeholder">Danh sách các chủ đề luyện tập sẽ hiển thị ở đây.</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="current_toeic_level_label">Trình độ hiện tại:</string>
+    <string name="your_ability_button">Khả năng của bạn</string>
+    <string name="set_your_toeic_level">Đặt trình độ TOEIC</string>
+    <string name="enter_toeic_level_prompt">Nhập điểm TOEIC dự kiến của bạn (0-990):</string>
+    <string name="toeic_level_hint">ví dụ: 500</string>
+    <string name="error_level_out_of_range">Vui lòng nhập điểm từ %1$d đến %2$d.</string>
+    <string name="error_invalid_number">Vui lòng nhập một số hợp lệ.</string>
+    <string name="error_level_empty">Vui lòng nhập điểm.</string>
+    <string name="start_practice">Bắt đầu luyện tập</string>
+
+    <string name="practice_header_part5">Part 5: Incomplete Sentences</string>
+    <string name="practice_header_part6">Part 6: Text Completion</string>
+    <string name="practice_header_part7">Part 7: Reading Comprehension</string>
+
+    <string name="part5_item_word_type">Câu hỏi từ loại (Danh từ, Động từ, Tính từ, Trạng từ)</string>
+    <string name="part5_item_tense">Câu hỏi ngữ pháp - Thì của động từ</string>
+    <string name="part5_item_voice">Câu hỏi ngữ pháp - Thể của động từ (chủ động vs bị động)</string>
+    <string name="part5_item_verb_form">Câu hỏi ngữ pháp - Dạng của động từ (to V, V-ing, V-inf)</string>
+    <string name="part5_item_conjunction_pronoun">Câu hỏi ngữ pháp - Liên từ &amp; Đại từ</string>
+    <string name="part5_item_vocabulary">Câu hỏi từ vựng</string>
+    <string name="part6_item_fill_sentence">Câu hỏi điền câu vào đoạn văn</string>
+    <string name="part6_item_mixed_practice">Luyện tập tổng hợp Part 6</string>
+    <string name="part6_item_by_text_type">Luyện tập theo hình thức văn bản (Email, Notice...)</string>
+    <string name="part7_item_main_idea">Câu hỏi về chủ đề, mục đích</string>
+    <string name="part7_item_detail">Câu hỏi tìm thông tin chi tiết</string>
+    <string name="part7_item_inference">Câu hỏi suy luận</string>
+    <string name="part7_item_vocabulary">Câu hỏi tìm từ đồng nghĩa</string>
+    <string name="part7_item_sentence_meaning">Câu hỏi về hàm ý câu nói</string>
+    <string name="part7_item_not_true">Câu hỏi tìm chi tiết sai (NOT TRUE)</string>
+    <string name="part7_item_fill_sentence">Câu hỏi điền câu</string>
+    <string name="part7_item_structure_single">Luyện tập đọc hiểu một đoạn văn</string>
+    <string name="part7_item_structure_multiple">Luyện tập đọc hiểu nhiều đoạn văn</string>
+    <string name="part7_item_by_text_type">Luyện tập theo các dạng văn bản (Article, Email...)</string>
+    <string name="error_navigating_to_exercise">Lỗi điều hướng đến bài tập</string>
+    <string name="error_navigating">Lỗi điều hướng</string>
+    <string name="question_progress_format">Câu %1$d/%2$d</string>
+    <string name="explanation_prefix">Giải thích: </string>
+    <string name="confirm_submission_title">Xác nhận nộp bài</string>
+    <string name="confirm_submission_message">Bạn có chắc chắn muốn nộp bài không?</string>
+    <string name="submit">Nộp bài</string>
+    <string name="error_navigating_to_result">Lỗi điều hướng đến màn hình kết quả</string>
+    <string name="retry_practice">Làm lại</string>
+    <string name="back_to_list">Về danh sách</string>
+
+    <string name="grammar_detail_default_title">Chi tiết Ngữ pháp</string>
+    <string name="practice_result_title">Kết quả luyện tập</string>
+    <string name="error_navigating_back">Lỗi khi quay lại danh sách</string>
+    <string name="translate_hint_error">Không tìm thấy từ để dịch.</string>
+    <string name="error_offline_not_found_no_network">Không tìm thấy ngôn ngữ.</string>
+    <string name="translating_word_online">Dịch ngôn ngữ: %1$s</string>
+
+</resources>
+

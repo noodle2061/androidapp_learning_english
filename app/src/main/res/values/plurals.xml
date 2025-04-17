@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="confirm_delete_message_single">
+        <item quantity="one">Bạn có chắc muốn xóa từ \'%1$s\' không?</item>
+        <item quantity="other">Bạn có chắc muốn xóa từ \'%1$s\' không?</item>
+    </plurals>
+
+    <plurals name="words_deleted_snackbar">
+        <item quantity="one">Đã xóa %1$d từ.</item>
+        <item quantity="other">Đã xóa %1$d từ.</item>
+    </plurals>
+
+    <plurals name="words_marked_for_review_snackbar">
+        <item quantity="one">Đã đánh dấu %1$d từ để ôn tập.</item>
+        <item quantity="other">Đã đánh dấu %1$d từ để ôn tập.</item>
+    </plurals>
+
+    <plurals name="words_unmarked_for_review_snackbar">
+        <item quantity="one">Đã bỏ đánh dấu %1$d từ khỏi danh sách ôn tập.</item>
+        <item quantity="other">Đã bỏ đánh dấu %1$d từ khỏi danh sách ôn tập.</item>
+    </plurals>
+</resources>

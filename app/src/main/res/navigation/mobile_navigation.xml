@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_vocabulary">
+
+    <fragment
+        android:id="@+id/navigation_vocabulary"
+        android:name="com.example.learning_english.fragment.VocabularyFragment"
+        android:label="@string/title_vocabulary"
+        tools:layout="@layout/fragment_vocabulary" />
+
+    <fragment
+        android:id="@+id/navigation_grammar"
+        android:name="com.example.learning_english.fragment.GrammarFragment"
+        android:label="@string/title_grammar"
+        tools:layout="@layout/fragment_grammar" >
+        <action
+            android:id="@+id/action_grammarFragment_to_grammarTheoryListFragment"
+            app:destination="@id/navigation_grammar_theory_list" />
+        <action
+            android:id="@+id/action_grammarFragment_to_grammarPracticeListFragment"
+            app:destination="@id/navigation_grammar_practice_list" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_grammar_theory_list"
+        android:name="com.example.learning_english.fragment.GrammarTheoryListFragment"
+        android:label="@string/grammar_theory_list_title"
+        tools:layout="@layout/fragment_grammar_theory_list" >
+        <action
+            android:id="@+id/action_grammarTheoryListFragment_to_grammarDetailFragment"
+            app:destination="@id/navigation_grammar_detail" />
+    </fragment>
+    <fragment
+        android:id="@+id/navigation_grammar_detail"
+        android:name="com.example.learning_english.fragment.GrammarDetailFragment"
+        android:label="{topicTitle}" tools:layout="@layout/fragment_grammar_detail" >
+        <argument
+            android:name="json_filename"
+            app:argType="string" />
+        <argument
+            android:name="topicTitle"
+            app:argType="string"
+            android:defaultValue="Chi tiết Ngữ pháp"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_grammar_practice_list"
+        android:name="com.example.learning_english.fragment.GrammarPracticeListFragment"
+        android:label="@string/grammar_practice_list_title"
+        tools:layout="@layout/fragment_grammar_practice_list" >
+        <action
+            android:id="@+id/action_grammarPracticeListFragment_to_grammarExerciseFragment"
+            app:destination="@id/navigation_grammar_exercise" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_grammar_exercise"
+        android:name="com.example.learning_english.fragment.GrammarExerciseFragment"
+        android:label="{practiceTopicName}"
+        tools:layout="@layout/fragment_grammar_exercise_quiz" > <argument
+        android:name="practiceTopicName"
+        app:argType="string" />
+        <action
+            android:id="@+id/action_grammarExerciseFragment_to_grammarResultFragment"
+            app:destination="@id/navigation_grammar_result"
+            app:popUpTo="@id/navigation_grammar_practice_list" /> </fragment>
+
+    <fragment
+        android:id="@+id/navigation_grammar_result"
+        android:name="com.example.learning_english.fragment.GrammarResultFragment"
+        android:label="@string/practice_result_title"
+        tools:layout="@layout/fragment_grammar_result" >
+        <argument
+            android:name="score"
+            app:argType="integer"
+            android:defaultValue="0" />
+        <argument
+            android:name="totalQuestions"
+            app:argType="integer"
+            android:defaultValue="0" />
+        <argument
+            android:name="practiceTopicName"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="originFragment"
+            app:argType="string"
+            app:nullable="true" /> <action
+        android:id="@+id/action_grammarResultFragment_to_grammarExerciseFragment"
+        app:destination="@id/navigation_grammar_exercise"
+        app:popUpTo="@id/navigation_grammar_practice_list"
+        app:popUpToInclusive="false"/> <action
+        android:id="@+id/action_resultFragment_to_toeicPart5Fragment"
+        app:destination="@id/navigation_toeic_part5"
+        app:popUpTo="@id/navigation_practice"
+        app:popUpToInclusive="false"/>
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/navigation_practice"
+        android:name="com.example.learning_english.fragment.PracticeFragment"
+        android:label="@string/title_practice"
+        tools:layout="@layout/fragment_practice" >
+        <action
+            android:id="@+id/action_practiceFragment_to_toeicPart5Fragment"
+            app:destination="@id/navigation_toeic_part5" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_toeic_part5"
+        android:name="com.example.learning_english.fragment.ToeicPart5Fragment"
+        android:label="{practiceTopicName}"
+        tools:layout="@layout/fragment_toeic_part5_quiz"> <argument
+        android:name="practiceTopicId"
+        app:argType="string"
+        app:nullable="true" />
+        <argument
+            android:name="practiceTopicName"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_toeicPart5Fragment_to_resultFragment"
+            app:destination="@id/navigation_grammar_result"
+            app:popUpTo="@id/navigation_practice"/> </fragment>
+
+</navigation>

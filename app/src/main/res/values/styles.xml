@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="MyVocabularyButton" parent="Widget.Material3.Button.ElevatedButton">
+    </style>
+
+    <style name="QuizOptionTextViewStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:padding">14dp</item>
+        <item name="android:gravity">center_vertical|start</item>
+        <item name="android:background">@drawable/quiz_option_background_selector</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:textIsSelectable">true</item>
+    </style>
+
+</resources>
+    

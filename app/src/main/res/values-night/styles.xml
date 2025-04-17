@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="MyVocabularyButton" parent="Widget.Material3.Button.ElevatedButton">
+        <item name="backgroundTint">@color/dark_secondaryContainer</item> <item name="android:textColor">@color/dark_onSecondaryContainer</item> <item name="iconTint">@color/dark_onSecondaryContainer</item> </style>
+
+</resources>
+    
