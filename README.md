@@ -1,6 +1,7 @@
 # androidapp_learning_english
 
 **cấu trúc thư mục dự án**
+```text
 learning_english/
 │   ├── app
 │   │   ├── sampledata
@@ -205,3 +206,4 @@ learning_english/
 │   ├── gradlew.bat
 │   ├── local.properties
 │   └── settings.gradle
+```
