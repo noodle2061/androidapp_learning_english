@@ -79,7 +79,6 @@ public class VocabularyViewModel extends AndroidViewModel {
     public LiveData<Integer> getDueReviewCount() { return mDueReviewCount; }
     public LiveData<List<Word>> getDueReviewWords() { return mDueReviewWords; }
 
-    // --- Logic Thêm từ (Giữ nguyên phần xử lý DB, thay đổi phần gọi API) ---
     public void addOrUpdateWordsFromString(String inputText) {
         Log.d(TAG, "addOrUpdateWordsFromString called with input: " + inputText);
         mExecutorService.execute(() -> {
