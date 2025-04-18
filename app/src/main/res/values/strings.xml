@@ -134,5 +134,26 @@
     <string name="error_offline_not_found_no_network">Không tìm thấy ngôn ngữ.</string>
     <string name="translating_word_online">Dịch ngôn ngữ: %1$s</string>
 
+
+    <string name="packages_title">Gói từ vựng</string>
+    <string name="words_in_package_title">Từ trong gói: %1$s</string>
+    <string name="words_in_package_title_placeholder">Từ trong gói</string>
+    <string name="no_package_selected_placeholder">Chọn một gói để xem từ</string>
+    <string name="add_new">Thêm mới</string>
+    <string name="add_new_package_title">Thêm gói từ vựng mới</string>
+    <string name="package_name_hint">Tên gói (ví dụ: Unit 1, Chủ đề Công việc)</string>
+    <string name="error_package_name_empty">Vui lòng nhập tên gói.</string>
+    <string name="add">Thêm</string>
+    <string name="package_marked_for_review">Đã đánh dấu tất cả từ trong gói \'%1$s\' để ôn tập.</string>
+    <string name="package_unmarked_for_review">Đã bỏ đánh dấu ôn tập cho tất cả từ trong gói \'%1$s\'.</string>
+    <string name="words_saved_no_translation_needed">Đã lưu từ mới (không cần dịch).</string>
+    <string name="no_new_words_added">Không có từ mới nào được thêm.</string>
+    <string name="words_saved_with_translation">Đã lưu %1$d từ mới và bản dịch.</string>
+
+    <string name="select_package_label">Chọn gói từ vựng:</string>
+    <string name="enter_words_label">Nhập từ (mỗi từ một dòng):</string>
+    <string name="enter_words_hint">Ví dụ:\napple\nbanana\n...</string>
+    <string name="error_no_packages_exist">Chưa có gói từ vựng nào. Vui lòng tạo gói mới trước.</string>
+
 </resources>
 

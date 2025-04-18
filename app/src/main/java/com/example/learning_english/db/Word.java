@@ -2,6 +2,7 @@ package com.example.learning_english.db;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.ForeignKey; // Import ForeignKey
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import androidx.annotation.NonNull;
@@ -9,12 +10,23 @@ import androidx.annotation.NonNull;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-@Entity(tableName = "words", indices = {@Index(value = {"englishWord"}, unique = true)})
+// Add ForeignKey constraint and index for packageId
+@Entity(tableName = "words",
+        indices = {
+                @Index(value = {"englishWord"}, unique = true),
+                @Index(value = {"packageId"}) // Index for faster package lookups - GIỮ LẠI INDEX Ở ĐÂY
+        },
+        foreignKeys = @ForeignKey(entity = VocabularyPackage.class,
+                parentColumns = "id", // Column in the VocabularyPackage table
+                childColumns = "packageId", // Column in this Word table
+                onDelete = ForeignKey.CASCADE) // Optional: Define behavior when a package is deleted
+)
 public class Word {
 
     // Constants for SRS default values
     private static final long ONE_DAY_MILLIS = TimeUnit.DAYS.toMillis(1);
     private static final float DEFAULT_EASE_FACTOR = 2.5f;
+    private static final int DEFAULT_PACKAGE_ID = 1; // Define default package ID
 
     @PrimaryKey(autoGenerate = true)
     public int id;
@@ -24,40 +36,47 @@ public class Word {
 
     public String vietnameseTranslation;
 
-    public long timestamp; // Thời điểm từ được thêm vào
+    public long timestamp;
 
-    // Gỡ bỏ defaultValue, migration sẽ xử lý nếu cột này được thêm trong quá khứ
-    // @ColumnInfo(defaultValue = "0")
     public boolean isForReview;
 
     // --- SRS Fields ---
-    // Gỡ bỏ defaultValue, MIGRATION_2_3 sẽ xử lý
-    // @ColumnInfo(defaultValue = "0")
     public long nextReviewTimestamp;
-
-    // Gỡ bỏ defaultValue, MIGRATION_2_3 sẽ xử lý
-    // @ColumnInfo(defaultValue = "1")
     public int reviewIntervalDays;
-
-    // Gỡ bỏ defaultValue, MIGRATION_2_3 sẽ xử lý
-    // @ColumnInfo(defaultValue = "2.5")
     public float easeFactor;
     // -----------------
 
-    // Constructor: Khởi tạo giá trị SRS ban đầu cho từ mới
-    public Word(@NonNull String englishWord, String vietnameseTranslation) {
+    // --- NEW FIELD ---
+    // *** XÓA index = true KHỎI ĐÂY ***
+    @ColumnInfo(defaultValue = "" + DEFAULT_PACKAGE_ID) // Set default value for the column
+    public int packageId;
+    // ---------------
+
+    // --- UPDATED CONSTRUCTOR ---
+    // Make sure the constructor accepts packageId or sets a default
+    // This constructor assumes you provide the packageId when creating a new Word object
+    public Word(@NonNull String englishWord, String vietnameseTranslation, int packageId) {
         this.englishWord = englishWord;
         this.vietnameseTranslation = vietnameseTranslation;
+        this.packageId = packageId; // Assign provided package ID
         this.timestamp = System.currentTimeMillis();
-        this.isForReview = false; // Giá trị mặc định khi tạo đối tượng mới
-
-        // Initialize SRS fields for new words
-        this.nextReviewTimestamp = System.currentTimeMillis();
+        this.isForReview = false;
+        this.nextReviewTimestamp = System.currentTimeMillis(); // Review immediately initially
         this.reviewIntervalDays = 1;
         this.easeFactor = DEFAULT_EASE_FACTOR;
     }
 
-    // Getters (Giữ nguyên)
+    // --- Optional: Add a constructor that uses the default package ID ---
+    // You might not need this if you always determine the package ID before creating a Word
+    /*
+    public Word(@NonNull String englishWord, String vietnameseTranslation) {
+        this(englishWord, vietnameseTranslation, DEFAULT_PACKAGE_ID); // Call the main constructor with default ID
+    }
+    */
+    // -------------------------
+
+
+    // --- Getters ---
     public int getId() { return id; }
     @NonNull public String getEnglishWord() { return englishWord; }
     public String getVietnameseTranslation() { return vietnameseTranslation; }
@@ -66,16 +85,21 @@ public class Word {
     public long getNextReviewTimestamp() { return nextReviewTimestamp; }
     public int getReviewIntervalDays() { return reviewIntervalDays; }
     public float getEaseFactor() { return easeFactor; }
+    public int getPackageId() { return packageId; } // Getter for packageId
+    // ---------------
 
-    // Setters (Giữ nguyên)
+    // --- Setters ---
     public void setForReview(boolean forReview) { isForReview = forReview; }
     public void setVietnameseTranslation(String translation) { this.vietnameseTranslation = translation; }
     public void setNextReviewTimestamp(long nextReviewTimestamp) { this.nextReviewTimestamp = nextReviewTimestamp; }
     public void setReviewIntervalDays(int reviewIntervalDays) { this.reviewIntervalDays = reviewIntervalDays; }
     public void setEaseFactor(float easeFactor) { this.easeFactor = easeFactor; }
+    // Setter for packageId might be needed if you allow moving words between packages
+    public void setPackageId(int packageId) { this.packageId = packageId; }
+    // ---------------
 
 
-    // equals & hashCode (Giữ nguyên)
+    // --- equals & hashCode (Updated) ---
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -87,6 +111,7 @@ public class Word {
                 nextReviewTimestamp == word.nextReviewTimestamp &&
                 reviewIntervalDays == word.reviewIntervalDays &&
                 Float.compare(word.easeFactor, easeFactor) == 0 &&
+                packageId == word.packageId && // Compare packageId
                 englishWord.equals(word.englishWord) &&
                 Objects.equals(vietnameseTranslation, word.vietnameseTranslation);
     }
@@ -94,6 +119,7 @@ public class Word {
     @Override
     public int hashCode() {
         return Objects.hash(id, englishWord, vietnameseTranslation, timestamp, isForReview,
-                nextReviewTimestamp, reviewIntervalDays, easeFactor);
+                nextReviewTimestamp, reviewIntervalDays, easeFactor, packageId); // Include packageId
     }
+    // ---------------------------------
 }

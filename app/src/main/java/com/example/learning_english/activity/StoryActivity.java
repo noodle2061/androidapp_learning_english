@@ -77,9 +77,12 @@ public class StoryActivity extends AppCompatActivity {
         apiClient = ApiClient.getInstance(this);
         vocabularyViewModel = new ViewModelProvider(this).get(VocabularyViewModel.class);
 
-        vocabularyViewModel.getReviewWords().observe(this, words -> {
-            reviewWords = words;
+        // Thay thế bằng getDueReviewWords()
+        vocabularyViewModel.getDueReviewWords().observe(this, words -> {
+            reviewWords = words; // Cập nhật biến reviewWords của Activity
+            // Cập nhật trạng thái nút nếu cần (logic này có thể đã có)
             binding.buttonLearnSelectedWords.setEnabled(reviewWords != null && !reviewWords.isEmpty());
+            Log.d(TAG, "Observed due review words count: " + (words != null ? words.size() : 0));
         });
 
         setupButtons();
