@@ -14,10 +14,6 @@ local.properties
 *.bak
 *.swp
 
-# Nếu bạn MUỐN commit các file trong assets (database, json...)
-# thì hãy XÓA hoặc COMMENT dòng sau (thêm # ở đầu):
-# /app/src/main/assets/
 
-# Nếu bạn KHÔNG MUỐN commit các file trong assets
-# thì hãy GIỮ NGUYÊN dòng sau:
-/app/src/main/assets/
+/app/src/main/assets/database
+/app/src/main/assets/grammar_theory
