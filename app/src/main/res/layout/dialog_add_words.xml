@@ -5,11 +5,30 @@
     android:orientation="vertical"
     android:padding="24dp">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/select_package_label"
+        android:labelFor="@+id/spinner_package_select"
+        android:layout_marginBottom="4dp"/>
+
+    <Spinner
+        android:id="@+id/spinner_package_select"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:minHeight="48dp" /> <TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/enter_words_label"
+    android:labelFor="@+id/edit_text_words_input"
+    android:layout_marginBottom="4dp"/>
+
     <EditText
         android:id="@+id/edit_text_words_input"
         android:layout_width="match_parent"
-        android:layout_height="800px"
-        android:hint="Nhập từ tiếng Anh..."
+        android:layout_height="wrap_content"
+        android:hint="@string/enter_words_hint"
         android:inputType="textMultiLine"
         android:minLines="3"
         android:gravity="top|start"

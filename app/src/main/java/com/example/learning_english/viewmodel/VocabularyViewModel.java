@@ -9,8 +9,8 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations; // Import Transformations
 
-// Import VolleyError để xử lý lỗi từ ApiClient
 import com.android.volley.VolleyError;
 import com.android.volley.TimeoutError;
 import com.android.volley.NetworkError;
@@ -19,9 +19,10 @@ import com.android.volley.ParseError;
 
 import com.example.learning_english.R;
 import com.example.learning_english.db.AppDatabase;
+import com.example.learning_english.db.VocabularyPackage; // Import new entity
+import com.example.learning_english.db.VocabularyPackageDao; // Import new DAO
 import com.example.learning_english.db.Word;
 import com.example.learning_english.db.WordDao;
-// Import các lớp network mới
 import com.example.learning_english.network.ApiClient;
 import com.example.learning_english.network.ApiResponseListener;
 import com.example.learning_english.utils.SpacedRepetitionScheduler;
@@ -44,134 +45,300 @@ public class VocabularyViewModel extends AndroidViewModel {
 
     private static final String TAG = "VocabularyViewModel";
     private WordDao mWordDao;
-    private LiveData<List<Word>> mAllWords;
-    private LiveData<List<Word>> mReviewWords;
+    private VocabularyPackageDao mPackageDao; // Add Package DAO
+    private LiveData<List<Word>> mAllWords; // Keep if needed elsewhere
+    private LiveData<List<VocabularyPackage>> mAllPackages; // LiveData for packages
     private ExecutorService mExecutorService;
-    // --- XÓA RequestQueue ---
-    private ApiClient apiClient; // Thêm ApiClient
+    private ApiClient apiClient;
 
-    private MutableLiveData<Boolean> mIsLoadingTranslation = new MutableLiveData<>(false);
-    public LiveData<Boolean> isLoadingTranslation() { return mIsLoadingTranslation; }
+    // LiveData for UI state
+    private MutableLiveData<Boolean> mIsLoading = new MutableLiveData<>(false);
+    private MutableLiveData<String> mMessage = new MutableLiveData<>(); // For toasts/snackbar messages
 
+    // LiveData for selected package and its words
+    private MutableLiveData<Integer> mSelectedPackageId = new MutableLiveData<>();
+    private LiveData<List<Word>> mWordsForSelectedPackage;
+
+    // LiveData for SRS review counts/words (keep existing)
     private LiveData<Integer> mDueReviewCount;
     private LiveData<List<Word>> mDueReviewWords;
 
-    // --- XÓA API Info ---
+    // Constants
+    // *** Make DEFAULT_PACKAGE_ID public or accessible ***
+    public static final int DEFAULT_PACKAGE_ID = 1; // ID for the default package
 
     public VocabularyViewModel(@NonNull Application application) {
         super(application);
         AppDatabase db = AppDatabase.getDatabase(application);
         mWordDao = db.wordDao();
-        mAllWords = mWordDao.getAllWords();
-        mReviewWords = mWordDao.getManuallyMarkedReviewWords();
+        mPackageDao = db.vocabularyPackageDao(); // Initialize Package DAO
         mExecutorService = AppDatabase.databaseWriteExecutor;
-        // --- XÓA Khởi tạo RequestQueue ---
-        apiClient = ApiClient.getInstance(application); // Khởi tạo ApiClient
+        apiClient = ApiClient.getInstance(application);
 
+        // Initialize LiveData
+        mAllWords = mWordDao.getAllWords(); // Keep if needed
+        mAllPackages = mPackageDao.getAllPackages(); // Get all packages
+
+        // Use Transformations.switchMap to observe words based on selectedPackageId
+        mWordsForSelectedPackage = Transformations.switchMap(mSelectedPackageId, id -> {
+            if (id == null || id <= 0) {
+                // No package selected, return LiveData with empty list
+                MutableLiveData<List<Word>> emptyListLiveData = new MutableLiveData<>();
+                emptyListLiveData.setValue(new ArrayList<>());
+                return emptyListLiveData;
+            } else {
+                // Package selected, return LiveData from DAO
+                return mWordDao.getWordsByPackageId(id);
+            }
+        });
+
+        // Initialize SRS LiveData (keep existing)
         long currentTime = System.currentTimeMillis();
         mDueReviewCount = mWordDao.getDueReviewWordsCount(currentTime);
         mDueReviewWords = mWordDao.getDueReviewWords(currentTime);
     }
 
-    // Getters giữ nguyên
-    public LiveData<List<Word>> getAllWords() { return mAllWords; }
-    public LiveData<List<Word>> getReviewWords() { return mReviewWords; }
+    // --- Getters for LiveData ---
+    public LiveData<List<VocabularyPackage>> getAllPackages() { return mAllPackages; }
+    public LiveData<List<Word>> getWordsForSelectedPackage() { return mWordsForSelectedPackage; }
+    public LiveData<Boolean> isLoading() { return mIsLoading; }
+    public LiveData<String> getMessage() { return mMessage; }
     public LiveData<Integer> getDueReviewCount() { return mDueReviewCount; }
     public LiveData<List<Word>> getDueReviewWords() { return mDueReviewWords; }
+    // public LiveData<List<Word>> getAllWords() { return mAllWords; } // Expose if needed
 
-    public void addOrUpdateWordsFromString(String inputText) {
-        Log.d(TAG, "addOrUpdateWordsFromString called with input: " + inputText);
+    // --- Package Management ---
+
+    /** Selects a package to display its words. */
+    public void selectPackage(int packageId) {
+        mSelectedPackageId.setValue(packageId);
+        Log.d(TAG, "Selected package ID: " + packageId);
+    }
+
+    /** Clears the current package selection. */
+    public void clearSelectedPackage() {
+        mSelectedPackageId.setValue(null); // Set to null to trigger empty list in switchMap
+        Log.d(TAG, "Cleared package selection");
+    }
+
+    /** Adds a new empty package. */
+    public void addEmptyPackage(String name) {
         mExecutorService.execute(() -> {
-            // Phần kiểm tra từ trùng lặp và chuẩn bị danh sách giữ nguyên
-            List<Word> existingWords = mWordDao.getAllWordsList();
-            Set<String> existingEnglishWords = new HashSet<>();
-            Map<String, Word> existingWordMap = new HashMap<>();
-            for (Word w : existingWords) {
-                String lowerCaseWord = w.englishWord.toLowerCase().trim();
-                existingEnglishWords.add(lowerCaseWord);
-                existingWordMap.put(lowerCaseWord, w);
-            }
-
-            String[] lines = inputText.split("\\r?\\n");
-            List<String> wordsToTranslate = new ArrayList<>();
-            String noTranslationPlaceholder = getApplication().getString(R.string.no_translation_placeholder);
-            List<Word> wordsToInsertImmediately = new ArrayList<>();
-
-            for (String line : lines) {
-                String englishWord = line.trim();
-                if (!englishWord.isEmpty()) {
-                    String lowerCaseWord = englishWord.toLowerCase();
-                    if (!existingEnglishWords.contains(lowerCaseWord)) {
-                        Word newWord = new Word(englishWord, noTranslationPlaceholder);
-                        wordsToInsertImmediately.add(newWord);
-                        wordsToTranslate.add(englishWord);
-                        existingEnglishWords.add(lowerCaseWord);
-                        Log.d(TAG, "New word prepared: " + englishWord);
-                    } else {
-                        Word existingWord = existingWordMap.get(lowerCaseWord);
-                        if (existingWord != null && (existingWord.getVietnameseTranslation() == null ||
-                                existingWord.getVietnameseTranslation().isEmpty() ||
-                                existingWord.getVietnameseTranslation().startsWith("Lỗi") ||
-                                existingWord.getVietnameseTranslation().equals(noTranslationPlaceholder))) {
-                            // Chỉ thêm vào danh sách cần dịch nếu bản dịch hiện tại không hợp lệ
-                            wordsToTranslate.add(englishWord);
-                            Log.d(TAG, "Existing word needs re-translation: " + englishWord);
-                        } else {
-                            Log.d(TAG, "Word already exists with translation: " + englishWord);
-                        }
-                    }
+            try {
+                // Optional: Check if package name already exists
+                VocabularyPackage existing = mPackageDao.getPackageByName(name);
+                if (existing != null) {
+                    postMessage("Gói '" + name + "' đã tồn tại.");
+                    return;
                 }
-            }
-
-            // Insert các từ mới ngay lập tức (nếu có)
-            if (!wordsToInsertImmediately.isEmpty()) {
-                mWordDao.insertAll(wordsToInsertImmediately);
-                Log.i(TAG, "Inserted " + wordsToInsertImmediately.size() + " new words.");
-            }
-
-            // Gọi API dịch nếu có từ cần dịch
-            if (!wordsToTranslate.isEmpty()) {
-                Log.i(TAG, "Found " + wordsToTranslate.size() + " words needing translation. Calling API via ApiClient...");
-                // Cập nhật trạng thái loading trên Main Thread
-                ContextCompat.getMainExecutor(getApplication()).execute(() -> mIsLoadingTranslation.setValue(true));
-                // Gọi API qua ApiClient
-                callTranslationApiViaClient(wordsToTranslate);
-            } else {
-                Log.i(TAG, "No words need API translation call.");
-                // Nếu không cần gọi API, đảm bảo trạng thái loading là false
-                if (mIsLoadingTranslation.getValue() != null && mIsLoadingTranslation.getValue()) {
-                    ContextCompat.getMainExecutor(getApplication()).execute(() -> mIsLoadingTranslation.setValue(false));
+                VocabularyPackage newPackage = new VocabularyPackage(name);
+                long newId = mPackageDao.insert(newPackage);
+                if (newId > 0) {
+                    postMessage("Đã thêm gói mới: " + name);
+                    Log.i(TAG, "Added new package: " + name + " with ID: " + newId);
+                } else {
+                    postMessage("Lỗi khi thêm gói mới.");
+                    Log.e(TAG, "Error inserting new package: " + name);
                 }
+            } catch (Exception e) {
+                Log.e(TAG, "Exception adding package", e);
+                postMessage("Lỗi: " + e.getMessage());
             }
         });
     }
 
-    // --- Hàm gọi API dịch qua ApiClient ---
+    /** Updates the 'isForReview' status for all words in a package. */
+    public void updatePackageReviewStatus(int packageId, boolean isChecked) {
+        mExecutorService.execute(() -> {
+            try {
+                mWordDao.updateReviewStatusForPackage(packageId, isChecked);
+                Log.i(TAG, "Updated review status for package ID " + packageId + " to " + isChecked);
+                // No message needed here, Activity shows a toast immediately
+                // Optional: Trigger refresh of word list if necessary, though LiveData should handle it.
+            } catch (Exception e) {
+                Log.e(TAG, "Exception updating package review status", e);
+                postMessage("Lỗi cập nhật trạng thái gói: " + e.getMessage());
+            }
+        });
+    }
+
+    // --- Word Management ---
+
+    /**
+     * Adds words from input string to the specified package.
+     * Fetches translations if needed.
+     * @param inputText The string containing words (one per line).
+     * @param targetPackageId The ID of the package to add words to.
+     */
+    public void addOrUpdateWordsFromString(String inputText, int targetPackageId) { // Added targetPackageId parameter
+        Log.d(TAG, "addOrUpdateWordsFromString called for package ID: " + targetPackageId);
+
+        postLoading(true); // Indicate loading start
+        mExecutorService.execute(() -> {
+            try {
+                // Get all existing words to check for duplicates efficiently
+                List<Word> allExistingWords = mWordDao.getAllWordsList();
+                Set<String> existingEnglishWords = new HashSet<>();
+                Map<String, Word> existingWordMap = new HashMap<>();
+                for (Word w : allExistingWords) {
+                    String lowerCaseWord = w.englishWord.toLowerCase().trim();
+                    existingEnglishWords.add(lowerCaseWord);
+                    existingWordMap.put(lowerCaseWord, w);
+                }
+
+                String[] lines = inputText.split("\\r?\\n");
+                List<String> wordsToTranslate = new ArrayList<>();
+                List<Word> wordsToInsertImmediately = new ArrayList<>();
+                String noTranslationPlaceholder = getApplication().getString(R.string.no_translation_placeholder);
+
+                for (String line : lines) {
+                    String englishWord = line.trim();
+                    if (!englishWord.isEmpty()) {
+                        String lowerCaseWord = englishWord.toLowerCase();
+                        if (!existingEnglishWords.contains(lowerCaseWord)) {
+                            // New word, prepare for insertion and translation
+                            // *** Use the targetPackageId passed to the method ***
+                            Word newWord = new Word(englishWord, noTranslationPlaceholder, targetPackageId);
+                            wordsToInsertImmediately.add(newWord);
+                            wordsToTranslate.add(englishWord);
+                            existingEnglishWords.add(lowerCaseWord); // Add to set to avoid duplicates within the input
+                            Log.d(TAG, "New word prepared: " + englishWord + " for package " + targetPackageId);
+                        } else {
+                            // Word exists, check if translation is needed
+                            Word existingWord = existingWordMap.get(lowerCaseWord);
+                            if (existingWord != null && (existingWord.getVietnameseTranslation() == null ||
+                                    existingWord.getVietnameseTranslation().isEmpty() ||
+                                    existingWord.getVietnameseTranslation().startsWith("Lỗi") ||
+                                    existingWord.getVietnameseTranslation().equals(noTranslationPlaceholder))) {
+                                // Add to translation list only if current translation is invalid/missing
+                                wordsToTranslate.add(englishWord);
+                                Log.d(TAG, "Existing word needs re-translation: " + englishWord);
+                                // Optional: Update packageId if the word exists in a different package?
+                                if (existingWord.getPackageId() != targetPackageId) {
+                                    Log.w(TAG, "Word '" + englishWord + "' exists in package " + existingWord.getPackageId() + ". Keeping it there for now.");
+                                    // To move it:
+                                    // existingWord.setPackageId(targetPackageId);
+                                    // mWordDao.updateWord(existingWord);
+                                }
+                            } else {
+                                Log.d(TAG, "Word already exists with translation: " + englishWord);
+                                // Optional: Move word to current package if it exists elsewhere?
+                                if (existingWord != null && existingWord.getPackageId() != targetPackageId) {
+                                    Log.w(TAG, "Word '" + englishWord + "' exists in package " + existingWord.getPackageId() + ". Keeping it there for now.");
+                                    // To move it:
+                                    // existingWord.setPackageId(targetPackageId);
+                                    // mWordDao.updateWord(existingWord);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Insert new words immediately
+                if (!wordsToInsertImmediately.isEmpty()) {
+                    mWordDao.insertAll(wordsToInsertImmediately);
+                    Log.i(TAG, "Inserted " + wordsToInsertImmediately.size() + " new words into package " + targetPackageId);
+                }
+
+                // Call translation API if needed
+                if (!wordsToTranslate.isEmpty()) {
+                    Log.i(TAG, "Found " + wordsToTranslate.size() + " words needing translation. Calling API...");
+                    callTranslationApiViaClient(wordsToTranslate); // API call will handle setting loading to false
+                } else {
+                    Log.i(TAG, "No words need API translation call.");
+                    postLoading(false); // Set loading false if no API call
+                    if (!wordsToInsertImmediately.isEmpty()) {
+                        postMessage(getApplication().getString(R.string.words_saved_no_translation_needed));
+                    } else {
+                        postMessage(getApplication().getString(R.string.no_new_words_added));
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error processing words from string", e);
+                postMessage("Lỗi xử lý từ: " + e.getMessage());
+                postLoading(false);
+            }
+        });
+    }
+
+
+    /** Deletes a single word. */
+    public void deleteSingleWord(Word word) {
+        if (word == null) return;
+        mExecutorService.execute(() -> {
+            try {
+                mWordDao.deleteWords(List.of(word)); // deleteWords accepts a list
+                String message = getApplication().getResources().getQuantityString(R.plurals.words_deleted_snackbar, 1, 1);
+                postMessage(message);
+                Log.i(TAG, "Deleted word: " + word.getEnglishWord());
+            } catch (Exception e) {
+                Log.e(TAG, "Error deleting word", e);
+                postMessage("Lỗi xóa từ: " + e.getMessage());
+            }
+        });
+    }
+
+    /** Sets the manual review mark for a word. */
+    public void setWordReviewMark(Word word, boolean isMarked) {
+        if (word == null) return;
+        mExecutorService.execute(() -> {
+            try {
+                word.setForReview(isMarked);
+                mWordDao.updateWord(word);
+                // Message is handled by Activity/Adapter interaction
+                Log.d(TAG, "Set isForReview mark for '" + word.getEnglishWord() + "' to " + isMarked);
+            } catch (Exception e) {
+                Log.e(TAG, "Error updating review mark", e);
+                postMessage("Lỗi đánh dấu từ: " + e.getMessage());
+            }
+        });
+    }
+
+    /** Updates word's SRS data based on review rating. */
+    public void updateWordReview(Word word, int userRating) {
+        if (word == null) {
+            Log.e(TAG, "updateWordReview called with null word.");
+            return;
+        }
+        mExecutorService.execute(() -> {
+            try {
+                Word updatedWord = SpacedRepetitionScheduler.calculateNextReview(word, userRating);
+                mWordDao.updateWord(updatedWord);
+                Log.d(TAG, "Updated SRS for '" + updatedWord.getEnglishWord() + "'. Next review: " + updatedWord.getNextReviewTimestamp());
+            } catch (Exception e) {
+                Log.e(TAG, "Error updating SRS data", e);
+                postMessage("Lỗi cập nhật lịch ôn tập: " + e.getMessage());
+            }
+        });
+    }
+
+
+    // --- Private Helper Methods ---
+
+    /** Calls the translation API using ApiClient. */
     private void callTranslationApiViaClient(List<String> englishWords) {
+        // Loading state is already set to true before calling this
         apiClient.translateWordsWithGemini(englishWords, new ApiResponseListener() {
             @Override
             public void onSuccess(JSONObject response) {
-                Log.i(TAG, "Translation API Response Received via ApiClient.");
-                parseAndSaveTranslations(response, englishWords); // Hàm parse giữ nguyên logic
-                // Cập nhật trạng thái loading trên Main Thread
-                ContextCompat.getMainExecutor(getApplication()).execute(() -> mIsLoadingTranslation.setValue(false));
+                Log.i(TAG, "Translation API Response Received.");
+                parseAndSaveTranslations(response, englishWords); // Parse and save
+                postLoading(false); // Set loading false after processing
             }
 
             @Override
             public void onError(VolleyError error) {
-                Log.e(TAG, "Translation API Error via ApiClient: " + error.toString());
-                handleApiError(error); // Gọi hàm xử lý lỗi tập trung
-                // Cập nhật trạng thái loading trên Main Thread
-                ContextCompat.getMainExecutor(getApplication()).execute(() -> mIsLoadingTranslation.setValue(false));
-                // Cập nhật bản dịch thành lỗi cho những từ đang chờ dịch
-                updateWordsWithError(englishWords, error);
+                Log.e(TAG, "Translation API Error: " + error.toString());
+                handleApiError(error); // Handle specific errors
+                updateWordsWithError(englishWords, error); // Mark words as failed
+                postLoading(false); // Set loading false on error
             }
         });
     }
-    // --------------------------------------
 
-    // Hàm parse và lưu bản dịch (Giữ nguyên logic)
+    /** Parses API response and saves translations. */
     private void parseAndSaveTranslations(JSONObject response, List<String> originalWords) {
+        // (Keep the existing logic from the previous version of this method)
         try {
             JSONArray candidates = response.optJSONArray("candidates");
             if (candidates != null && candidates.length() > 0) {
@@ -179,7 +346,6 @@ public class VocabularyViewModel extends AndroidViewModel {
                 JSONArray parts = (content != null) ? content.optJSONArray("parts") : null;
                 if (parts != null && parts.length() > 0) {
                     String rawText = parts.optJSONObject(0).optString("text", "");
-                    // Trích xuất nội dung từ khối ```txt
                     String translationsText = Utils.extractTextFromMarkdownCodeBlock(rawText, "txt");
 
                     if (translationsText != null) {
@@ -192,75 +358,67 @@ public class VocabularyViewModel extends AndroidViewModel {
                                 for (int i = 0; i < originalWords.size(); i++) {
                                     String english = originalWords.get(i);
                                     String vietnamese = translations[i].trim();
-                                    // Chỉ cập nhật nếu bản dịch không rỗng
                                     if (!vietnamese.isEmpty()) {
                                         mWordDao.updateTranslation(english, vietnamese);
                                         updatedCount++;
                                     } else {
-                                        // Nếu API trả về rỗng, có thể ghi lại placeholder hoặc lỗi
-                                        mWordDao.updateTranslation(english, noTranslationPlaceholder + " (API returned empty)");
+                                        mWordDao.updateTranslation(english, noTranslationPlaceholder + " (API rỗng)");
                                         Log.w(TAG, "API returned empty translation for: " + english);
                                     }
                                 }
-                                Log.i(TAG, "Updated translations for " + updatedCount + " words via ApiClient.");
+                                Log.i(TAG, "Updated translations for " + updatedCount + " words.");
                                 if (updatedCount > 0) {
-                                    showToastOnMainThread(getApplication().getString(R.string.words_saved));
+                                    postMessage(getApplication().getString(R.string.words_saved_with_translation, updatedCount));
                                 } else if (translations.length > 0) {
-                                    // Trường hợp API trả về nhưng tất cả đều rỗng
-                                    showToastOnMainThread("API trả về bản dịch rỗng.");
+                                    postMessage("API trả về bản dịch rỗng.");
                                 }
                             });
                         } else {
-                            Log.e(TAG, "Translation count mismatch: Expected " + originalWords.size() + ", Got " + translations.length + " in ```txt block.");
-                            showToastOnMainThread(getApplication().getString(R.string.api_error_translation_mismatch));
-                            // Cập nhật lỗi cho các từ
+                            Log.e(TAG, "Translation count mismatch: Expected " + originalWords.size() + ", Got " + translations.length);
+                            postMessage(getApplication().getString(R.string.api_error_translation_mismatch));
                             updateWordsWithError(originalWords, new VolleyError("Translation count mismatch"));
                         }
                     } else {
-                        Log.e(TAG, "Could not extract translations from ```txt block in API response.");
-                        showToastOnMainThread(getApplication().getString(R.string.api_error_no_txt_block));
+                        Log.e(TAG, "Could not extract translations from ```txt block.");
+                        postMessage(getApplication().getString(R.string.api_error_no_txt_block));
                         updateWordsWithError(originalWords, new VolleyError("No ```txt block found"));
                     }
-                    return; // Đã xử lý thành công hoặc lỗi parsing
+                    return;
                 }
             }
-            // Nếu không có candidates hoặc parts hợp lệ
-            Log.e(TAG, "No valid candidates/parts found in translation API response.");
-            showToastOnMainThread(getApplication().getString(R.string.api_error_no_content));
+            Log.e(TAG, "No valid candidates/parts found in translation response.");
+            postMessage(getApplication().getString(R.string.api_error_no_content));
             updateWordsWithError(originalWords, new VolleyError("No valid candidates/parts"));
 
-        } catch (Exception e) { // Bắt Exception chung để đề phòng lỗi không mong muốn
+        } catch (Exception e) {
             Log.e(TAG, "Error parsing translation JSON response: ", e);
-            showToastOnMainThread(getApplication().getString(R.string.api_error_parsing));
+            postMessage(getApplication().getString(R.string.api_error_parsing));
             updateWordsWithError(originalWords, new VolleyError("JSON parsing error: " + e.getMessage()));
         }
     }
-    // --------------------------------------
 
-    // --- Hàm xử lý lỗi API tập trung ---
+    /** Handles specific API errors and posts messages. */
     private void handleApiError(VolleyError error) {
+        // (Keep the existing logic from the previous version of this method)
         String specificErrorMsg;
         if (error instanceof TimeoutError) {
             specificErrorMsg = getApplication().getString(R.string.api_error_timeout);
         } else if (error instanceof ServerError && error.networkResponse != null) {
             specificErrorMsg = "Lỗi máy chủ API dịch (Code: " + error.networkResponse.statusCode + ").";
-            // Cố gắng đọc chi tiết lỗi từ response body
             if (error.networkResponse.data != null) {
                 try {
                     String errorData = new String(error.networkResponse.data, StandardCharsets.UTF_8);
                     Log.e(TAG, "API Server Error Body: " + errorData);
+                    // Try to parse detailed error message from Gemini
                     try {
                         JSONObject errorJson = new JSONObject(errorData);
                         if (errorJson.has("error") && errorJson.getJSONObject("error").has("message")) {
                             specificErrorMsg += "\nChi tiết: " + errorJson.getJSONObject("error").getString("message");
                         }
                     } catch (JSONException jsonEx) {
-                        Log.w(TAG, "Error body is not JSON or invalid format.");
-                        specificErrorMsg += "\n" + errorData; // Hiển thị raw data nếu không parse được
+                        specificErrorMsg += "\n" + errorData; // Show raw data if not JSON
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error reading API error details", e);
-                }
+                } catch (Exception e) { Log.e(TAG, "Error reading API error details", e); }
             }
         } else if (error instanceof NetworkError) {
             specificErrorMsg = "Lỗi kết nối mạng khi dịch.";
@@ -269,9 +427,9 @@ public class VocabularyViewModel extends AndroidViewModel {
         } else if (error.getMessage() != null && error.getMessage().contains("Error creating request body")) {
             specificErrorMsg = "Lỗi nội bộ: Không thể tạo yêu cầu API dịch.";
         } else if (error.getMessage() != null && error.getMessage().contains("Word list is empty")) {
-            specificErrorMsg = "Danh sách từ cần dịch rỗng."; // Không cần hiển thị toast này thường xuyên
+            specificErrorMsg = "Danh sách từ cần dịch rỗng.";
             Log.w(TAG, specificErrorMsg);
-            return; // Không hiển thị toast cho lỗi này
+            return; // Don't show toast for this expected case
         }
         else {
             specificErrorMsg = getApplication().getString(R.string.api_error_generic);
@@ -279,12 +437,12 @@ public class VocabularyViewModel extends AndroidViewModel {
                 specificErrorMsg += ": " + error.getMessage();
             }
         }
-        showToastOnMainThread(specificErrorMsg);
+        postMessage(specificErrorMsg);
     }
-    // ---------------------------------
 
-    // --- Hàm cập nhật lỗi cho các từ ---
+    /** Updates words with an error message in their translation field. */
     private void updateWordsWithError(List<String> words, VolleyError error) {
+        // (Keep the existing logic from the previous version of this method)
         mExecutorService.execute(() -> {
             String errorMsg = "Lỗi dịch";
             if (error instanceof TimeoutError) errorMsg += ": Timeout";
@@ -298,59 +456,28 @@ public class VocabularyViewModel extends AndroidViewModel {
             Log.w(TAG, "Updated " + words.size() + " words with error state: " + errorMsg);
         });
     }
-    // ---------------------------------
 
-    // Các hàm xử lý từ vựng khác (delete, setReviewMark, updateWordReview) giữ nguyên
-    public void deleteSingleWord(Word word) {
-        if (word == null) return;
-        mExecutorService.execute(() -> {
-            mWordDao.deleteWords(List.of(word));
-            String message = getApplication().getResources().getQuantityString(R.plurals.words_deleted_snackbar, 1, 1);
-            showToastOnMainThread(message);
-        });
+    /** Safely posts a message to the mMessage LiveData. */
+    private void postMessage(String message) {
+        Log.d(TAG, "Posting message: " + message);
+        mMessage.postValue(message);
     }
 
-    public void setWordReviewMark(Word word, boolean isMarked) {
-        if (word == null) return;
-        mExecutorService.execute(() -> {
-            word.setForReview(isMarked);
-            mWordDao.updateWord(word);
-            String message;
-            if (isMarked) {
-                message = getApplication().getResources().getQuantityString(R.plurals.words_marked_for_review_snackbar, 1, 1);
-            } else {
-                message = getApplication().getResources().getQuantityString(R.plurals.words_unmarked_for_review_snackbar, 1, 1);
-            }
-            showToastOnMainThread(message);
-            Log.d(TAG, "Set isForReview mark for '" + word.getEnglishWord() + "' to " + isMarked);
-        });
+    /** Safely posts loading state to the mIsLoading LiveData. */
+    private void postLoading(boolean isLoading) {
+        Log.d(TAG, "Posting loading state: " + isLoading);
+        mIsLoading.postValue(isLoading);
     }
 
-    public void updateWordReview(Word word, int userRating) {
-        if (word == null) {
-            Log.e(TAG, "updateWordReview called with null word.");
-            return;
-        }
-        mExecutorService.execute(() -> {
-            Word updatedWord = SpacedRepetitionScheduler.calculateNextReview(word, userRating);
-            mWordDao.updateWord(updatedWord);
-            Log.d(TAG, "Updated SRS for '" + updatedWord.getEnglishWord() + "'. Next review: " + updatedWord.getNextReviewTimestamp());
-        });
-    }
-    // ----------------------------------------------------------------------
-
-    // Hàm tiện ích hiển thị Toast (giữ nguyên)
-    private void showToastOnMainThread(String message) {
-        ContextCompat.getMainExecutor(getApplication()).execute(() ->
-                Toast.makeText(getApplication(), message, Toast.LENGTH_SHORT).show()
-        );
+    /** Clears the message LiveData. */
+    public void clearMessage() {
+        mMessage.setValue(null);
     }
 
-    // (Tùy chọn) Hủy các request khi ViewModel bị clear
     @Override
     protected void onCleared() {
         super.onCleared();
-        // apiClient.cancelAllRequests(TAG); // Cần set tag phù hợp khi gọi request
         Log.d(TAG, "VocabularyViewModel cleared.");
+        // Cancel any ongoing operations if necessary
     }
 }

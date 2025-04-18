@@ -13,49 +13,61 @@ import java.util.List;
 @Dao
 public interface WordDao {
 
+    // Keep existing insert/update/delete methods for single words
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     void insert(Word word);
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     long[] insertAll(List<Word> words);
 
-    @Query("SELECT * FROM words ORDER BY timestamp DESC")
-    LiveData<List<Word>> getAllWords();
-
-    @Query("SELECT * FROM words ORDER BY timestamp DESC")
-    List<Word> getAllWordsList();
-
-    @Query("DELETE FROM words")
-    void deleteAll();
-
-    @Query("SELECT * FROM words WHERE englishWord = :englishWord LIMIT 1")
-    Word findByEnglishWord(String englishWord);
+    @Update
+    void updateWord(Word word);
 
     @Delete
-    void deleteWords(List<Word> words);
+    void deleteWords(List<Word> words); // For deleting multiple selected words
+
+    @Query("DELETE FROM words")
+    void deleteAll(); // Keep if needed
+
+    // Keep methods for finding/updating individual words
+    @Query("SELECT * FROM words WHERE englishWord = :englishWord LIMIT 1")
+    Word findByEnglishWord(String englishWord);
 
     @Query("UPDATE words SET vietnameseTranslation = :translation WHERE englishWord = :englishWord")
     void updateTranslation(String englishWord, String translation);
 
-    @Update
-    void updateWord(Word word); // Dùng để cập nhật toàn bộ thông tin từ, bao gồm cả SRS
+    // --- UPDATED/NEW QUERIES FOR PACKAGES ---
 
-    // --- SRS Queries ---
+    // Get all words (might not be needed often if using package view)
+    @Query("SELECT * FROM words ORDER BY timestamp DESC")
+    LiveData<List<Word>> getAllWords();
 
-    // Lấy danh sách các từ cần ôn tập (đã đến hạn)
+    // Get words for a specific package
+    @Query("SELECT * FROM words WHERE packageId = :packageId ORDER BY englishWord ASC")
+    LiveData<List<Word>> getWordsByPackageId(int packageId);
+
+    // Update review status for all words in a specific package
+    @Query("UPDATE words SET isForReview = :isForReview WHERE packageId = :packageId")
+    void updateReviewStatusForPackage(int packageId, boolean isForReview);
+
+    // Get all words (non-LiveData version) - useful for background checks
+    @Query("SELECT * FROM words ORDER BY timestamp DESC")
+    List<Word> getAllWordsList();
+
+    // --- SRS QUERIES (Potentially update if needed) ---
+    // These might need filtering by package if you want SRS per package
+
     @Query("SELECT * FROM words WHERE nextReviewTimestamp <= :currentTime ORDER BY nextReviewTimestamp ASC")
     LiveData<List<Word>> getDueReviewWords(long currentTime);
 
-    // Lấy số lượng từ cần ôn tập (đã đến hạn)
     @Query("SELECT COUNT(id) FROM words WHERE nextReviewTimestamp <= :currentTime")
     LiveData<Integer> getDueReviewWordsCount(long currentTime);
 
-    // -----------------
-
-
-    // (Tùy chọn) Lấy danh sách các từ được đánh dấu ôn tập thủ công (isForReview = 1)
-    // Giữ lại nếu bạn vẫn muốn dùng song song cả isForReview và SRS
+    // Get manually marked words (might need package filter too)
     @Query("SELECT * FROM words WHERE isForReview = 1 ORDER BY timestamp DESC")
     LiveData<List<Word>> getManuallyMarkedReviewWords();
 
+    // --- Optional: Query to get words NOT in any specific package ---
+    // @Query("SELECT * FROM words WHERE packageId IS NULL OR packageId <= 0")
+    // LiveData<List<Word>> getUnpackagedWords();
 }
